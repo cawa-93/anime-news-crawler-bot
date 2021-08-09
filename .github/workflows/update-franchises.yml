@@ -3,7 +3,7 @@ name: Update franchises
 on:
   workflow_dispatch:
   schedule:
-  - cron: "0 10-22/2 * * *"
+    - cron: "0 10-22/2 * * *"
 
 jobs:
   build:
@@ -11,22 +11,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 16
-        cache: 'npm'
-    
-    - run: npm ci
-    - run: npm run franchises
-      env:
-        SHIKI_USER_ID: ${{ secrets.SHIKI_USER_ID }}
-        APP_OWNER: ${{ secrets.APP_OWNER }}
-        UPDATE_FRANCHISES_ITERATION_LIMIT: ${{ secrets.UPDATE_FRANCHISES_ITERATION_LIMIT }}
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: 'npm'
 
-    - run: |
-        git add meta
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        git commit -m "Update franchises"
-        git push
+      - run: npm ci
+      - run: npm run franchises
+        env:
+          SHIKI_USER_ID: ${{ secrets.SHIKI_USER_ID }}
+          APP_OWNER: ${{ secrets.APP_OWNER }}
+          UPDATE_FRANCHISES_ITERATION_LIMIT: ${{ secrets.UPDATE_FRANCHISES_ITERATION_LIMIT }}
+
+      - run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add meta
+          git diff-index --quiet HEAD || git commit -m "Update franchises" && git push

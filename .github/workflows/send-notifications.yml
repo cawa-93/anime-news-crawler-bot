@@ -29,8 +29,8 @@ jobs:
         ALLOWED_UPDATE_EVENTS: ${{ secrets.ALLOWED_UPDATE_EVENTS }}
 
     - run: |
-        git add meta
         git config user.name github-actions
         git config user.email github-actions@github.com
-        git commit -m "Update LAST_CHECK_TIME"
-        git push
+        git add meta
+        git diff-index --quiet HEAD || git commit -m "Update LAST_CHECK_TIME" && git push
+
