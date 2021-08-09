@@ -19,6 +19,11 @@ jobs:
     
     - run: npm ci
     - run: npm run franchises
+      env:
+        SHIKI_USER_ID: ${{ github.secrets.SHIKI_USER_ID }}
+        APP_OWNER: ${{ github.secrets.APP_OWNER }}
+        UPDATE_FRANCHISES_ITERATION_LIMIT: ${{ github.secrets.UPDATE_FRANCHISES_ITERATION_LIMIT }}
+
     - run: |
         git add meta
         git config user.name github-actions
