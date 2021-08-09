@@ -1,0 +1,36 @@
+name: Send notifications
+
+on:
+  workflow_dispatch:
+  schedule:
+  - cron: "30 10-22/3 * * *"
+
+jobs:
+  npm-script:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: 16
+        cache: 'npm'
+
+    - run: npm ci
+    - run: npm run updates
+      env:
+        SHIKI_USER_ID: ${{ secrets.SHIKI_USER_ID }}
+        APP_OWNER: ${{ secrets.APP_OWNER }}
+        UPDATE_FRANCHISES_ITERATION_LIMIT: ${{ secrets.UPDATE_FRANCHISES_ITERATION_LIMIT }}
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        TARGET_CHAT_ID: ${{ secrets.TARGET_CHAT_ID }}
+        IGNORED_FRANCHISES: ${{ secrets.IGNORED_FRANCHISES }}
+        ALLOWED_UPDATE_EVENTS: ${{ secrets.ALLOWED_UPDATE_EVENTS }}
+
+    - run: |
+        git add meta
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git commit -m "Update LAST_CHECK_TIME"
+        git push
