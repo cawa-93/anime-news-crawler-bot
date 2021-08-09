@@ -1,19 +1,16 @@
 {
   "name": "anime-news-crawler",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
-    "serve": "vite preview"
+    "update:franchises": "node ./update-franchises.js"
   },
+  "author": "Alex Kozack",
+  "license": "ISC",
+  "description": "",
   "dependencies": {
-    "vue": "^3.0.5"
+    "dotenv": "10.0.0"
   },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^1.3.0",
-    "@vue/compiler-sfc": "^3.0.5",
-    "typescript": "^4.3.2",
-    "vite": "^2.4.4",
-    "vue-tsc": "^0.2.2"
-  }
+  "devDependencies": {}
 }
