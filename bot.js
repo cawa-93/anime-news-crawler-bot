@@ -37,7 +37,7 @@ async function getFormattedMessage(update) {
 	const body = update.body ? '\n\n' + clearHTML(update.body).trim().substr(0, 4000) : '';
 	const franchise = await getFranchiseById(update.linked.id);
 	const hashtag = franchise ? '\n#' + franchise : '';
-	return `${title}\nоб ${about}${body}${hashtag}`.replace(/\n{3,}/, '\n\n');
+	return `${title}\nо ${about}${body}${hashtag}`.replace(/\n{3,}/, '\n\n');
 }
 
 
