@@ -49,7 +49,9 @@ function getNews(page, limit) {
 }
 
 
-const ALLOWED_UPDATE_EVENTS = ['released', 'ongoing'];
+const ALLOWED_UPDATE_EVENTS = process.env.ALLOWED_UPDATE_EVENTS
+                              ? process.env.ALLOWED_UPDATE_EVENTS.split(',').map(s => s.trim)
+                              : ['released', 'ongoing'];
 
 
 /**
