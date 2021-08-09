@@ -1,12 +1,18 @@
 import {call} from './call.js';
 
+/**
+ * @typedef {{id: number, name: string, russian: string, url: string}} TopicLinked
+ */
+
 
 /**
- * @typedef Topic
+ * @typedef UpdateTopic
  * @property {number} id
- * @property {{id: number, name: string, russian: string, url: string}} linked
+ * @property {TopicLinked} linked
  * @property {string} url
  * @property {string} created_at
+ * @property {'episode'|'released'|'ongoing'|'anons'|null} event
+ * @property {number|null} episode
  */
 
 /**
@@ -14,29 +20,63 @@ import {call} from './call.js';
  *
  * @param {number} page
  * @param {number} limit
- * @return {Promise<Topic[]>} Возвналает на limit+1 результатов больше если существует следующая страница пагинации
+ * @return {Promise<UpdateTopic[]>} Возвналает на limit+1 результатов больше если существует следующая страница
+ *   пагинации
  */
-
-function getTopics(page, limit) {
+function getUpdates(page, limit) {
 	const search = new URLSearchParams({page, limit});
 	return call(`topics/updates?${search}`);
 }
 
 
 /**
+ * Возвращает массив новостных форумов
  *
- * @param before_at
- * @return {Promise<Topic[]>}
+ * @param {number} page
+ * @param {number} limit
+ * @return {Promise<UpdateTopic[]>} Возвналает на limit+1 результатов больше если существует следующая страница
+ *   пагинации
  */
-export async function loadUpdates(before_at) {
+function getNews(page, limit) {
+	const search = new URLSearchParams({
+		page,
+		limit,
+		type: 'Topics::NewsTopic',
+		forum: 'news',
+		linked_type: 'Anime',
+	});
+	return call(`topics?${search}`);
+}
+
+
+const ALLOWED_UPDATE_EVENTS = ['released', 'ongoing'];
+
+
+/**
+ * @typedef ResolvedTopic
+ * @property {string|undefined} title
+ * @property {string|undefined} body
+ * @property {TopicLinked} linked
+ * @property {string} url
+ */
+
+/**
+ *
+ * @param {number} before_at
+ * @param {'news'|'updates'} type
+ * @return {Promise<UpdateTopic[]>}
+ */
+export async function loadTopics(before_at, type) {
 	let page = 1;
 	const limit = 30;
 
 	const newTopicsFromLastCheck = [];
 
-	while (true) {
-		const topics = await getTopics(page++, limit);
+	const loader = type === 'updates' ? getUpdates : getNews;
+	const resolver = type === 'updates' ? resolveUpdateTopic : resolveNewsTopic;
 
+	while (true) {
+		const topics = await loader(page++, limit);
 		if (topics.length === 0) {
 			break;
 		}
@@ -48,7 +88,15 @@ export async function loadUpdates(before_at) {
 				return newTopicsFromLastCheck;
 			}
 
-			newTopicsFromLastCheck.push(topic);
+			if (type === 'updates' && !ALLOWED_UPDATE_EVENTS.includes(topic.event)) {
+				continue;
+			}
+
+			if (!topic.linked) {
+				continue;
+			}
+
+			newTopicsFromLastCheck.push(resolver(topic));
 		}
 
 		/**
@@ -61,4 +109,52 @@ export async function loadUpdates(before_at) {
 	}
 
 	return newTopicsFromLastCheck;
+}
+
+
+/**
+ *
+ * @param {UpdateTopic} update
+ * @returns {ResolvedTopic}
+ */
+function resolveUpdateTopic(update) {
+	const title = update.event === 'anons'
+	              ? 'Анонсировано аниме'
+	              : update.event === 'ongoing'
+	                ? 'Начало показа'
+	                : update.event === 'released'
+	                  ? 'Показ завершен'
+	                  : update.event === 'episode'
+	                    ? `Вышла серия ${update.episode}`
+	                    : update.event + ' event';
+
+	return {
+		title,
+		url: update.url,
+		linked: update.linked,
+	};
+}
+
+
+/**
+ * @typedef NewsTopic
+ * @property {number} id
+ * @property {string} topic_title
+ * @property {string} html_body
+ * @property {TopicLinked} linked
+ * @property {{url: string}} forum
+ */
+
+/**
+ *
+ * @param {NewsTopic} topic
+ * @returns {ResolvedTopic}
+ */
+function resolveNewsTopic(topic) {
+	return {
+		title: topic.topic_title,
+		body: topic.html_body,
+		linked: topic.linked,
+		url: `https://shikimori.one${topic.forum.url}/${topic.id}/`,
+	};
 }
