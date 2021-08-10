@@ -1,3 +1,4 @@
+import {loadFranchise}       from './shiki-api/loadFranchises.js';
 import {sendNotification}    from './bot.js';
 import {config}              from 'dotenv';
 import {join}                from 'node:path';
@@ -15,30 +16,44 @@ const LAST_CHECK_TIME = parseInt(readFileSync(LAST_CHECK_TIME_PATH, {encoding: '
 
 /**
  *
- * @return {Promise<Map<string, Set<number>>>}
+ * @return {Promise<Set<number>>}
  */
 function loadFranchisesFromMeta() {
 	const dest = join(process.cwd(), 'meta/franchises.json');
-	return readFile(dest, {encoding: 'utf-8'}).then(s => {
-		/** @type Map<string, Set<number>> */
-		const map = new Map;
-
-		const data = JSON.parse(s);
-
-		for (const [franchiseName, ids] of data) {
-			map.set(franchiseName, new Set(ids));
-		}
-
-		return map;
-	});
+	return readFile(dest, {encoding: 'utf-8'}).then(s => new Set(JSON.parse(s || '[]')));
 }
 
 
 /**
  *
- * @type {Map<string, Set<number>>|null}
+ * @type {Promise<Set<number>>}
  */
-let franchises = null;
+const relevantIdsPromise = loadFranchisesFromMeta();
+const ignoredFranchises = new Set((process.env.IGNORED_FRANCHISES || '').split(',').map(s => s.trim()));
+
+/**
+ * @param {ResolvedTopic} update
+ */
+async function isUpdateRelevant(update) {
+	if (!update?.linked?.id) {
+		return false
+	}
+
+	const relevantIds = await relevantIdsPromise
+
+	const anime = await loadAnime(update.linked.id)
+
+	if (anime.franchise && ignoredFranchises.has(anime.franchise)) {
+		return false
+	}
+
+	if (relevantIds.has(update.linked.id)) {
+		return true;
+	}
+
+	const graph = await loadFranchise(update.linked.id)
+	return graph.nodes.some(node => relevantIds.has(node.id))
+}
 
 
 /**
@@ -46,31 +61,10 @@ let franchises = null;
  * @param {ResolvedTopic[]} updates
  */
 async function processUpdates(updates) {
-	if (franchises === null) {
-		franchises = await loadFranchisesFromMeta();
-	}
-
-	const allRelevantIds = new Set;
-	franchises.forEach(idsSet => idsSet.forEach(id => allRelevantIds.add(id)));
-
-	/**
-	 * @param {ResolvedTopic} update
-	 */
-	const isUpdateRelevant = async (update) => {
-		if (allRelevantIds.has(update.linked.id)) {
-			return true;
-		}
-
-		const anime = await loadAnime(update.linked.id);
-		return anime.franchise !== null && franchises.has(anime.franchise);
-	};
-
 	for (const update of updates) {
-		if (!await isUpdateRelevant(update)) {
-			continue;
+		if (await isUpdateRelevant(update)) {
+			await sendNotification(update);
 		}
-
-		await sendNotification(update);
 	}
 }
 

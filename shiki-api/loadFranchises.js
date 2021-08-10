@@ -21,12 +21,12 @@ const ITERATION_TIMEOUT = process.env.UPDATE_FRANCHISES_ITERATION_LIMIT || 1000
  * @param {number} id
  * @return {Promise<FranchiseGraph>}
  */
-function loadFranchise(id) {
+export function loadFranchise(id) {
 	return call(`animes/${id}/franchise`)
 }
 
 /**
- *
+ * @deprecated
  * @param {number} user_id
  * @return {Promise<Map<string, Set<number>>>}
  */

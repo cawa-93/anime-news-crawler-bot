@@ -1,6 +1,6 @@
 import {config}         from 'dotenv';
 import {join}           from 'node:path';
-import {loadFranchises} from './shiki-api/loadFranchises.js';
+import {loadUserRates}  from './shiki-api/loadUserRates.js';
 import {writeFile}      from 'node:fs/promises';
 
 
@@ -8,16 +8,8 @@ const dest = join(process.cwd(), 'meta/franchises.json');
 
 config();
 
-const ignoredFranchises = (process.env.IGNORED_FRANCHISES || '').split(',').map(s => s.trim());
-
-loadFranchises().then(franchises => {
-	const dataToSave = [];
-	for (const [franchise, ids] of franchises.entries()) {
-		if (ignoredFranchises.includes(franchise)) {
-			continue;
-		}
-
-		dataToSave.push([franchise, Array.from(ids.values())]);
-	}
-	return writeFile(dest, JSON.stringify(dataToSave), {flag: 'w'});
+loadUserRates({user_id: process.env.SHIKI_USER_ID, type: ['Anime']})
+	.then(rates => {
+	const relevantIds = rates.map(r => r.target_id);
+	return writeFile(dest, JSON.stringify(relevantIds), {flag: 'w'});
 });

@@ -20,7 +20,7 @@ import {call} from './call.js';
  *
  * @param {UserRateType[]} type
  * @param {UserRateStatus[]} status
- * @param {number} user_id
+ * @param {number|string} user_id
  * @return {Promise<UserRate[]>}
  */
 export function loadUserRates({type = undefined, status= ['completed', 'watching', 'rewatching', 'planned'], user_id = process.env.SHIKI_USER_ID} = {}) {
