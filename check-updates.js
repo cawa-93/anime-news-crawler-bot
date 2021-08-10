@@ -31,28 +31,40 @@ function loadFranchisesFromMeta() {
 const relevantIdsPromise = loadFranchisesFromMeta();
 const ignoredFranchises = new Set((process.env.IGNORED_FRANCHISES || '').split(',').map(s => s.trim()));
 
+
 /**
  * @param {ResolvedTopic} update
  */
 async function isUpdateRelevant(update) {
 	if (!update?.linked?.id) {
-		return false
+		return false;
 	}
 
-	const relevantIds = await relevantIdsPromise
+	const relevantIds = await relevantIdsPromise;
 
-	const anime = await loadAnime(update.linked.id)
+	const anime = await loadAnime(update.linked.id);
 
 	if (anime.franchise && ignoredFranchises.has(anime.franchise)) {
-		return false
+		return false;
 	}
 
 	if (relevantIds.has(update.linked.id)) {
 		return true;
 	}
 
-	const graph = await loadFranchise(update.linked.id)
-	return graph.nodes.some(node => relevantIds.has(node.id))
+	const graph = await loadFranchise(update.linked.id);
+	const isRelevantFranchise = graph.nodes.some(node => relevantIds.has(node.id));
+
+	/**
+	 * Если обнаружена релевантная франшиза -- скачать локально все ID
+	 * Чтобы при следующих итерациях не пришлось загружать эту же франшизу повторно
+	 */
+	if (isRelevantFranchise) {
+		graph.nodes.forEach(node => relevantIds.add(node.id));
+		return true;
+	}
+
+	return false;
 }
 
 
