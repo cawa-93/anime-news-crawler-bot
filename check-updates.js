@@ -1,3 +1,4 @@
+import {loadUserRates}       from 'shiki-api/loadUserRates.js';
 import {loadFranchise}       from './shiki-api/loadFranchises.js';
 import {sendNotification}    from './bot.js';
 import {config}              from 'dotenv';
@@ -15,7 +16,7 @@ const LAST_CHECK_TIME = parseInt(readFileSync(LAST_CHECK_TIME_PATH, {encoding: '
 
 
 /**
- *
+ * @deprecated
  * @return {Promise<Set<number>>}
  */
 function loadFranchisesFromMeta() {
@@ -28,7 +29,11 @@ function loadFranchisesFromMeta() {
  *
  * @type {Promise<Set<number>>}
  */
-const relevantIdsPromise = loadFranchisesFromMeta();
+const relevantIdsPromise = loadUserRates().then(rates => {
+	const relevantIds = new Set
+	rates.forEach(rate => relevantIds.add(rate.target_id))
+	return relevantIds
+});
 const ignoredFranchises = new Set((process.env.IGNORED_FRANCHISES || '').split(',').map(s => s.trim()));
 
 
