@@ -60,6 +60,7 @@ const ALLOWED_UPDATE_EVENTS = process.env.ALLOWED_UPDATE_EVENTS
  * @property {string|undefined} body
  * @property {TopicLinked} linked
  * @property {string} url
+ * @property {'episode'|'released'|'ongoing'|'anons'|null} event
  */
 
 /**
@@ -134,6 +135,7 @@ function resolveUpdateTopic(update) {
 		title,
 		url: update.url,
 		linked: update.linked,
+		event: update.event,
 	};
 }
 
@@ -158,5 +160,6 @@ function resolveNewsTopic(topic) {
 		body: topic.html_body,
 		linked: topic.linked,
 		url: `https://shikimori.one${topic.forum.url}/${topic.id}/`,
+		event: null,
 	};
 }

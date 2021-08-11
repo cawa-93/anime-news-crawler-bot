@@ -29,15 +29,31 @@ function clearHTML(str) {
 /**
  *
  * @param {ResolvedTopic} update
+ * @return {Promise<string>}
  */
 async function getFormattedMessage(update) {
-	const title = `<b><a href="${update.url}">${update.title}</a></b>`;
-	const about = `<a href="https://shikimori.one${update.linked.url}">${update.linked.russian
-	                                                                     || update.linked.name}</a>`;
-	const body = update.body ? '\n\n' + clearHTML(update.body).trim().substr(0, 4000) : '';
+
+	const animeTitle = update.linked.russian || update.linked.name;
+	const animeLink = `<a href="https://shikimori.one${update.linked.url}">${animeTitle}</a>`;
+
+	const header = update.event
+	               ? `<b>${update.title}</b> ${animeLink}`
+	               : `${animeLink}\n\n<b>${update.title}</b> <a href="${update.url}">🔗</a>`;
+
+	let body = '';
+	if (update.body?.trim()) {
+		body = clearHTML(update.body).trim();
+		// Обрезать текст по первому обзацу
+		if (body) {
+			const paragraphs = body.split(/\n{2,}/).map(p => p.trim());
+			body = paragraphs[0];
+		}
+	}
+
 	const franchise = await getFranchiseById(update.linked.id);
-	const hashtag = franchise ? '\n#' + franchise : '';
-	return `${title}\nо ${about}${body}${hashtag}`.replace(/\n{3,}/, '\n\n');
+	const hashtag = franchise ? '#' + franchise : '';
+
+	return `${header}\n\n${body}\n\n${hashtag}`.replace(/\n{3,}/, '\n\n');
 }
 
 
@@ -47,13 +63,18 @@ async function getFormattedMessage(update) {
  */
 export async function sendNotification(update) {
 	const bot = getBot();
-	return bot.telegram.sendMessage(process.env.TARGET_CHAT_ID, await getFormattedMessage(update), {parse_mode: 'HTML'})
+
+	return bot.telegram.sendMessage(
+		process.env.TARGET_CHAT_ID,
+		await getFormattedMessage(update),
+		{
+			disable_web_page_preview: true,
+			parse_mode: 'HTML',
+		})
 		.catch(e => {
-			console.log(e);
-			bot.telegram.sendMessage(
-				process.env.TARGET_CHAT_ID,
-				e + e.stack + '\n\n TOPIC:\n\n' + JSON.stringify(update));
-		}).catch(console.error);
+			console.error(e);
+			bot.telegram.sendMessage(process.env.TARGET_CHAT_ID, e + e.stack + '\n\n TOPIC: ' + update.url);
+		});
 }
 
 
