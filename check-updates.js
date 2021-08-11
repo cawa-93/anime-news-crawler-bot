@@ -1,12 +1,12 @@
-import {loadUserRates}       from 'shiki-api/loadUserRates.js';
-import {loadFranchise}       from './shiki-api/loadFranchises.js';
-import {sendNotification}    from './bot.js';
-import {config}              from 'dotenv';
-import {join}                from 'node:path';
-import {loadAnime}           from './shiki-api/loadAnime.js';
-import {loadTopics}          from './shiki-api/topicsUpdates.js';
-import {readFile, writeFile} from 'node:fs/promises';
-import {readFileSync}        from 'node:fs';
+import {loadUserRates}    from './shiki-api/loadUserRates.js';
+import {loadFranchise}    from './shiki-api/loadFranchises.js';
+import {sendNotification} from './bot.js';
+import {config}           from 'dotenv';
+import {join}             from 'node:path';
+import {loadAnime}        from './shiki-api/loadAnime.js';
+import {loadTopics}       from './shiki-api/topicsUpdates.js';
+import {writeFile}        from 'node:fs/promises';
+import {readFileSync}     from 'node:fs';
 
 
 config();
@@ -14,25 +14,23 @@ const LAST_CHECK_TIME_PATH = join(process.cwd(), 'meta/LAST_CHECK_TIME');
 // 1628514378637
 const LAST_CHECK_TIME = parseInt(readFileSync(LAST_CHECK_TIME_PATH, {encoding: 'utf-8'}));
 
-
 /**
  * @deprecated
  * @return {Promise<Set<number>>}
  */
-function loadFranchisesFromMeta() {
-	const dest = join(process.cwd(), 'meta/franchises.json');
-	return readFile(dest, {encoding: 'utf-8'}).then(s => new Set(JSON.parse(s || '[]')));
-}
-
+// function loadFranchisesFromMeta() {
+// 	const dest = join(process.cwd(), 'meta/franchises.json');
+// 	return readFile(dest, {encoding: 'utf-8'}).then(s => new Set(JSON.parse(s || '[]')));
+// }
 
 /**
  *
  * @type {Promise<Set<number>>}
  */
 const relevantIdsPromise = loadUserRates().then(rates => {
-	const relevantIds = new Set
-	rates.forEach(rate => relevantIds.add(rate.target_id))
-	return relevantIds
+	const relevantIds = new Set;
+	rates.forEach(rate => relevantIds.add(rate.target_id));
+	return relevantIds;
 });
 const ignoredFranchises = new Set((process.env.IGNORED_FRANCHISES || '').split(',').map(s => s.trim()));
 
