@@ -76,9 +76,13 @@ async function isUpdateRelevant(update) {
  * @param {ResolvedTopic[]} updates
  */
 async function processUpdates(updates) {
+	console.log(`Загружено ${updates.length} новостей`);
 	for (const update of updates) {
 		if (await isUpdateRelevant(update)) {
+			console.log(`Отпрака уведомления "${update.title}"`);
 			await sendNotification(update);
+		} else {
+			console.log(`Не релевантно "${update.title}"`);
 		}
 	}
 }
