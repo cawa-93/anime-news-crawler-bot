@@ -33,12 +33,12 @@ function clearHTML(str) {
  */
 async function getFormattedMessage(update) {
 
-	const animeTitle = update.linked.russian || update.linked.name;
-	const animeLink = `<a href="https://shikimori.one${update.linked.url}">${animeTitle}</a>`;
+	const animeTitle = update.linked?.russian || update.linked?.name || '';
+	const animeLink = update.linked?.url ? `<a href="https://shikimori.one${update.linked.url}">${animeTitle}</a>` : '';
 
 	const header = update.event
 	               ? `<b>${update.title}</b> ${animeLink}`
-	               : `${animeLink}\n\n<b>${update.title}</b> <a href="${update.url}">🔗</a>`;
+	               : `${animeLink}\n\n<b>${update.title}</b> <a href="${update.url}">🔗</a>`.trim();
 
 	let body = '';
 	if (update.body?.trim()) {
@@ -50,10 +50,10 @@ async function getFormattedMessage(update) {
 		}
 	}
 
-	const franchise = await getFranchiseById(update.linked.id);
+	const franchise = update.linked?.id ? await getFranchiseById(update.linked.id) : null;
 	const hashtag = franchise ? '#' + franchise : '';
 
-	return `${header}\n\n${body}\n\n${hashtag}`.replace(/\n{3,}/, '\n\n');
+	return `${header}\n\n${body}\n\n${hashtag}`.trim().replace(/\n{3,}/, '\n\n');
 }
 
 
