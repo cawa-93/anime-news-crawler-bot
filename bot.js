@@ -64,17 +64,19 @@ async function getFormattedMessage(update) {
 export async function sendNotification(update) {
 	const bot = getBot();
 
-	return bot.telegram.sendMessage(
-		process.env.TARGET_CHAT_ID,
-		await getFormattedMessage(update),
-		{
-			disable_web_page_preview: true,
-			parse_mode: 'HTML',
-		})
-		.catch(e => {
-			console.error(e);
-			bot.telegram.sendMessage(process.env.TARGET_CHAT_ID, e + e.stack + '\n\n TOPIC: ' + update.url);
-		});
+	try {
+		const message = await getFormattedMessage(update)
+		await bot.telegram.sendMessage(
+			process.env.TARGET_CHAT_ID,
+			message,
+			{
+				disable_web_page_preview: true,
+				parse_mode: 'HTML',
+			})
+	} catch (e) {
+		console.error(e);
+		await bot.telegram.sendMessage(process.env.TARGET_CHAT_ID, e + e.stack + '\n\n TOPIC: ' + update.url)
+	}
 }
 
 
