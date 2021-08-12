@@ -22,7 +22,6 @@ jobs:
       env:
         SHIKI_USER_ID: ${{ secrets.SHIKI_USER_ID }}
         APP_OWNER: ${{ secrets.APP_OWNER }}
-        UPDATE_FRANCHISES_ITERATION_LIMIT: ${{ secrets.UPDATE_FRANCHISES_ITERATION_LIMIT }}
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         TARGET_CHAT_ID: ${{ secrets.TARGET_CHAT_ID }}
         IGNORED_FRANCHISES: ${{ secrets.IGNORED_FRANCHISES }}

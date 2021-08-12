@@ -15,15 +15,6 @@ const LAST_CHECK_TIME_PATH = join(process.cwd(), 'meta/LAST_CHECK_TIME');
 const LAST_CHECK_TIME = parseInt(readFileSync(LAST_CHECK_TIME_PATH, {encoding: 'utf-8'}));
 
 /**
- * @deprecated
- * @return {Promise<Set<number>>}
- */
-// function loadFranchisesFromMeta() {
-// 	const dest = join(process.cwd(), 'meta/franchises.json');
-// 	return readFile(dest, {encoding: 'utf-8'}).then(s => new Set(JSON.parse(s || '[]')));
-// }
-
-/**
  *
  * @type {Promise<Set<number>>}
  */
