@@ -36,9 +36,14 @@ async function getFormattedMessage(update) {
 	const animeTitle = update.linked?.russian || update.linked?.name || '';
 	const animeLink = update.linked?.url ? `<a href="https://shikimori.one${update.linked.url}">${animeTitle}</a>` : '';
 
+	/**
+	 * Заголовок новости, в котором заменено английское название аниме на русское
+	 */
+	const newsTitle = update.linked?.russian ? update.title.replaceAll(update.linked.name, update.linked.russian) : update.title;
+
 	const header = update.event
-	               ? `<b>${update.title}</b> ${animeLink}`
-	               : `${animeLink}\n\n<b>${update.title}</b> <a href="${update.url}">🔗</a>`.trim();
+	               ? `<b>${newsTitle}</b> ${animeLink}`
+	               : `${animeLink}\n\n<b>${newsTitle}</b> <a href="${update.url}">🔗</a>`.trim();
 
 	let body = '';
 	if (update.body?.trim()) {
