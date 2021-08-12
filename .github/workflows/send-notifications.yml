@@ -3,7 +3,7 @@ name: Send notifications
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 10-22/2 * * *"
+    - cron: "0 6-18/2 * * *"
 
 jobs:
   npm-script:
