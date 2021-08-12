@@ -58,7 +58,7 @@ const ALLOWED_UPDATE_EVENTS = process.env.ALLOWED_UPDATE_EVENTS
  * @typedef ResolvedTopic
  * @property {string|undefined} title
  * @property {string|undefined} body
- * @property {TopicLinked} linked
+ * @property {TopicLinked|null} linked
  * @property {string} url
  * @property {'episode'|'released'|'ongoing'|'anons'|null} event
  */
@@ -92,10 +92,6 @@ export async function loadTopics(before_at, type) {
 			}
 
 			if (type === 'updates' && !ALLOWED_UPDATE_EVENTS.includes(topic.event)) {
-				continue;
-			}
-
-			if (!topic.linked) {
 				continue;
 			}
 
@@ -145,7 +141,7 @@ function resolveUpdateTopic(update) {
  * @property {number} id
  * @property {string} topic_title
  * @property {string} html_body
- * @property {TopicLinked} linked
+ * @property {TopicLinked|null} linked
  * @property {{url: string}} forum
  */
 

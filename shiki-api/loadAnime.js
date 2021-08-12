@@ -6,6 +6,7 @@ import {call} from './call.js';
  * @property {string} name
  * @property {string} russian
  * @property {string | null} franchise
+ * @property {string} url
  */
 
 /**

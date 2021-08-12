@@ -27,14 +27,47 @@ const ignoredFranchises = new Set((process.env.IGNORED_FRANCHISES || '').split('
 
 
 /**
+ *
+ * @param body
+ * @return {Set<number>}
+ */
+function getIdsFromText(body) {
+	if (typeof body !== 'string' || !body.includes('/animes/')) {
+		return new Set;
+	}
+
+	const ids = new Set;
+
+	for (const [, idStr] of body.matchAll(/\/animes\/[a-z]?(?<id>[0-9]+)/ig)) {
+		const id = parseInt(idStr, 10);
+		if (isNaN(id)) {
+			continue;
+		}
+		ids.add(id);
+	}
+
+	return ids;
+}
+
+
+/**
  * @param {ResolvedTopic} update
  */
 async function isUpdateRelevant(update) {
+	const relevantIds = await relevantIdsPromise;
+
+	// Если к новости нет прикреплённых аниме
+	// Выполнить поиск по тексту новости
 	if (!update?.linked?.id) {
+		const ids = getIdsFromText(update.body);
+		for (const id of ids) {
+			if (relevantIds.has(id)) {
+				return true;
+			}
+		}
+
 		return false;
 	}
-
-	const relevantIds = await relevantIdsPromise;
 
 	const anime = await loadAnime(update.linked.id);
 
@@ -64,12 +97,28 @@ async function isUpdateRelevant(update) {
 
 /**
  *
+ * @param {number} id
+ * @return {Promise<TopicLinked>}
+ */
+function createLinked(id) {
+	return loadAnime(id);
+}
+
+
+/**
+ *
  * @param {ResolvedTopic[]} updates
  */
 async function processUpdates(updates) {
 	console.log(`Загружено ${updates.length} новостей`);
 	for (const update of updates) {
 		if (await isUpdateRelevant(update)) {
+
+			if (!update.linked) {
+				const linkedIds = getIdsFromText(update.body);
+				update.linked = await createLinked(linkedIds.values().next().value);
+			}
+
 			console.log(`Отпрака уведомления "${update.title}"`);
 			await sendNotification(update);
 		} else {
@@ -80,9 +129,9 @@ async function processUpdates(updates) {
 
 
 const currentCheckTime = Date.now();
-loadTopics(LAST_CHECK_TIME, 'news')
+loadTopics(LAST_CHECK_TIME, 'updates')
 	.then(processUpdates)
-	.then(() => loadTopics(LAST_CHECK_TIME, 'updates'))
+	.then(() => loadTopics(LAST_CHECK_TIME, 'news'))
 	.then(processUpdates)
 	.then(() => writeFile(LAST_CHECK_TIME_PATH, `${currentCheckTime}`, {encoding: 'utf-8'}))
 	.catch(e => {
