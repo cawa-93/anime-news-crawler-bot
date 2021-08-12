@@ -51,35 +51,23 @@ function getIdsFromText(body) {
 
 
 /**
- * @param {ResolvedTopic} update
+ * Проверяет является ли переданный Anime ID релевантным -- относится ли к одной из просмотренных фрашниз
+ * @param {number} id
  */
-async function isUpdateRelevant(update) {
+async function isIdRelevant(id) {
 	const relevantIds = await relevantIdsPromise;
 
-	// Если к новости нет прикреплённых аниме
-	// Выполнить поиск по тексту новости
-	if (!update?.linked?.id) {
-		const ids = getIdsFromText(update.body);
-		for (const id of ids) {
-			if (relevantIds.has(id)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	const anime = await loadAnime(update.linked.id);
+	const anime = await loadAnime(id);
 
 	if (anime.franchise && ignoredFranchises.has(anime.franchise)) {
 		return false;
 	}
 
-	if (relevantIds.has(update.linked.id)) {
+	if (relevantIds.has(id)) {
 		return true;
 	}
 
-	const graph = await loadFranchise(update.linked.id);
+	const graph = await loadFranchise(id);
 	const isRelevantFranchise = graph.nodes.some(node => relevantIds.has(node.id));
 
 	/**
@@ -88,12 +76,10 @@ async function isUpdateRelevant(update) {
 	 */
 	if (isRelevantFranchise) {
 		graph.nodes.forEach(node => relevantIds.add(node.id));
-		return true;
 	}
 
-	return false;
+	return isRelevantFranchise;
 }
-
 
 /**
  *
@@ -112,13 +98,23 @@ function createLinked(id) {
 async function processUpdates(updates) {
 	console.log(`Загружено ${updates.length} новостей`);
 	for (const update of updates) {
-		if (await isUpdateRelevant(update)) {
 
-			if (!update.linked) {
-				const linkedIds = getIdsFromText(update.body);
-				update.linked = await createLinked(linkedIds.values().next().value);
+		/**
+		 * Если новость не прикреплена к какому-либо аниме
+		 * Нужно выполнить поиск ссылок на аниме тексте и привязать новость к релевантным
+		 * Ссылки содержат ИД.
+		 */
+		if (!update.linked?.id) {
+			const linkedIds = getIdsFromText(update.body);
+			for (const linkedId of linkedIds) {
+				if (await isIdRelevant(linkedId)) {
+					update.linked = await createLinked(linkedId)
+					console.log(`Отпрака уведомления "${update.title}"`);
+					await sendNotification(update)
+					break;
+				}
 			}
-
+		} else if (await isIdRelevant(update.linked.id)) {
 			console.log(`Отпрака уведомления "${update.title}"`);
 			await sendNotification(update);
 		} else {
