@@ -14,15 +14,6 @@ const LAST_CHECK_TIME_PATH = join(process.cwd(), 'meta/LAST_CHECK_TIME');
 // 1628514378637
 const LAST_CHECK_TIME = parseInt(readFileSync(LAST_CHECK_TIME_PATH, {encoding: 'utf-8'}));
 
-/**
- *
- * @type {Promise<Set<number>>}
- */
-const relevantIdsPromise = loadUserRates().then(rates => {
-	const relevantIds = new Set;
-	rates.forEach(rate => relevantIds.add(rate.target_id));
-	return relevantIds;
-});
 const ignoredFranchises = new Set((process.env.IGNORED_FRANCHISES || '').split(',').map(s => s.trim()));
 
 
@@ -51,11 +42,31 @@ function getIdsFromText(body) {
 
 
 /**
+ *
+ * @type {Set<number> | null}
+ */
+let relevantIdsCache = null;
+
+
+function getRelevantIds() {
+	if (relevantIdsCache !== null) {
+		return Promise.resolve(relevantIdsCache);
+	}
+
+	return loadUserRates().then(rates => {
+		relevantIdsCache = new Set;
+		rates.forEach(rate => relevantIdsCache.add(rate.target_id));
+		return relevantIdsCache;
+	});
+}
+
+
+/**
  * Проверяет является ли переданный Anime ID релевантным -- относится ли к одной из просмотренных фрашниз
  * @param {number} id
  */
 async function isIdRelevant(id) {
-	const relevantIds = await relevantIdsPromise;
+	const relevantIds = await getRelevantIds();
 
 	const anime = await loadAnime(id);
 
@@ -75,11 +86,12 @@ async function isIdRelevant(id) {
 	 * Чтобы при следующих итерациях не пришлось загружать эту же франшизу повторно
 	 */
 	if (isRelevantFranchise) {
-		graph.nodes.forEach(node => relevantIds.add(node.id));
+		graph.nodes.forEach(node => relevantIdsCache.add(node.id));
 	}
 
 	return isRelevantFranchise;
 }
+
 
 /**
  *
@@ -108,9 +120,9 @@ async function processUpdates(updates) {
 			const linkedIds = getIdsFromText(update.body);
 			for (const linkedId of linkedIds) {
 				if (await isIdRelevant(linkedId)) {
-					update.linked = await createLinked(linkedId)
+					update.linked = await createLinked(linkedId);
 					console.log(`Отпрака уведомления "${update.title}"`);
-					await sendNotification(update)
+					await sendNotification(update);
 					break;
 				}
 			}
