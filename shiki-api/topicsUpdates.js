@@ -1,7 +1,13 @@
 import {call} from './call.js';
 
 /**
- * @typedef {{id: number, name: string, russian: string, url: string}} TopicLinked
+ * @typedef TopicLinked
+ * @property {number} id
+ * @property {string} name
+ * @property {string} russian
+ * @property {string} url
+ * @property {number} episodes
+ * @property {number} episodes_aired
  */
 
 
@@ -111,6 +117,8 @@ export async function loadTopics(before_at, type) {
 }
 
 
+const dateFormat = new Intl.DateTimeFormat('uk', {month: 'long', day: 'numeric', year: 'numeric'})
+
 /**
  *
  * @param {UpdateTopic} update
@@ -127,11 +135,20 @@ function resolveUpdateTopic(update) {
 	                    ? `Вышла серия ${update.episode}`
 	                    : update.event + ' event';
 
+	let body = ''
+	if (update.event === 'ongoing' && update.linked?.episodes) {
+		const episodesToEnd = update.linked.episodes - update.linked.episodes_aired;
+		const week = 1000 * 60 * 60 * 24 * 7
+		const proposedReleaseDate = Date.now() + episodesToEnd * week
+		body = `Предположительная дата завершения: <b>${dateFormat.format(proposedReleaseDate)}</b>`
+	}
+
 	return {
 		title,
 		url: update.url,
 		linked: update.linked,
 		event: update.event,
+		body,
 	};
 }
 
