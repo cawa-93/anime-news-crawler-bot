@@ -1,12 +1,12 @@
-import {loadUserRates}    from './shiki-api/loadUserRates.js';
-import {loadFranchise}    from './shiki-api/loadFranchises.js';
+import {loadUserRates} from './shiki-api/loadUserRates.js';
+import {loadFranchise} from './shiki-api/loadFranchises.js';
 import {sendNotification} from './bot.js';
-import {config}           from 'dotenv';
-import {join}             from 'node:path';
-import {loadAnime}        from './shiki-api/loadAnime.js';
-import {loadTopics}       from './shiki-api/topicsUpdates.js';
-import {writeFile}        from 'node:fs/promises';
-import {readFileSync}     from 'node:fs';
+import {config} from 'dotenv';
+import {join} from 'node:path';
+import {loadAnime} from './shiki-api/loadAnime.js';
+import {loadTopics} from './shiki-api/topicsUpdates.js';
+import {writeFile} from 'node:fs/promises';
+import {readFileSync} from 'node:fs';
 
 
 config();
@@ -23,21 +23,21 @@ const ignoredFranchises = new Set((process.env.IGNORED_FRANCHISES || '').split('
  * @return {Set<number>}
  */
 function getIdsFromText(body) {
-	if (typeof body !== 'string' || !body.includes('/animes/')) {
-		return new Set;
-	}
+    if (typeof body !== 'string' || !body.includes('/animes/')) {
+        return new Set;
+    }
 
-	const ids = new Set;
+    const ids = new Set;
 
-	for (const [, idStr] of body.matchAll(/\/animes\/[a-z]?(?<id>[0-9]+)/ig)) {
-		const id = parseInt(idStr, 10);
-		if (isNaN(id)) {
-			continue;
-		}
-		ids.add(id);
-	}
+    for (const [, idStr] of body.matchAll(/\/animes\/[a-z]?(?<id>[0-9]+)/ig)) {
+        const id = parseInt(idStr, 10);
+        if (isNaN(id)) {
+            continue;
+        }
+        ids.add(id);
+    }
 
-	return ids;
+    return ids;
 }
 
 
@@ -49,15 +49,15 @@ let relevantIdsCache = null;
 
 
 function getRelevantIds() {
-	if (relevantIdsCache !== null) {
-		return Promise.resolve(relevantIdsCache);
-	}
+    if (relevantIdsCache !== null) {
+        return Promise.resolve(relevantIdsCache);
+    }
 
-	return loadUserRates().then(rates => {
-		relevantIdsCache = new Set;
-		rates.forEach(rate => relevantIdsCache.add(rate.target_id));
-		return relevantIdsCache;
-	});
+    return loadUserRates().then(rates => {
+        relevantIdsCache = new Set;
+        rates.forEach(rate => relevantIdsCache.add(rate.target_id));
+        return relevantIdsCache;
+    });
 }
 
 
@@ -66,30 +66,30 @@ function getRelevantIds() {
  * @param {number} id
  */
 async function isIdRelevant(id) {
-	const relevantIds = await getRelevantIds();
+    const relevantIds = await getRelevantIds();
 
-	const anime = await loadAnime(id);
+    const anime = await loadAnime(id);
 
-	if (anime.franchise && ignoredFranchises.has(anime.franchise)) {
-		return false;
-	}
+    if (anime.franchise && ignoredFranchises.has(anime.franchise)) {
+        return false;
+    }
 
-	if (relevantIds.has(id)) {
-		return true;
-	}
+    if (relevantIds.has(id)) {
+        return true;
+    }
 
-	const graph = await loadFranchise(id);
-	const isRelevantFranchise = graph.nodes.some(node => relevantIds.has(node.id));
+    const graph = await loadFranchise(id);
+    const isRelevantFranchise = graph.nodes.some(node => relevantIds.has(node.id));
 
-	/**
-	 * Если обнаружена релевантная франшиза -- скачать локально все ID
-	 * Чтобы при следующих итерациях не пришлось загружать эту же франшизу повторно
-	 */
-	if (isRelevantFranchise) {
-		graph.nodes.forEach(node => relevantIdsCache.add(node.id));
-	}
+    /**
+     * Если обнаружена релевантная франшиза -- скачать локально все ID
+     * Чтобы при следующих итерациях не пришлось загружать эту же франшизу повторно
+     */
+    if (isRelevantFranchise) {
+        graph.nodes.forEach(node => relevantIdsCache.add(node.id));
+    }
 
-	return isRelevantFranchise;
+    return isRelevantFranchise;
 }
 
 
@@ -99,7 +99,7 @@ async function isIdRelevant(id) {
  * @return {Promise<TopicLinked>}
  */
 function createLinked(id) {
-	return loadAnime(id);
+    return loadAnime(id);
 }
 
 
@@ -108,42 +108,59 @@ function createLinked(id) {
  * @param {ResolvedTopic[]} updates
  */
 async function processUpdates(updates) {
-	console.log(`Загружено ${updates.length} новостей`);
-	for (const update of updates) {
+    for (const update of updates) {
 
-		/**
-		 * Если новость не прикреплена к какому-либо аниме
-		 * Нужно выполнить поиск ссылок на аниме тексте и привязать новость к релевантным
-		 * Ссылки содержат ИД.
-		 */
-		if (!update.linked?.id) {
-			const linkedIds = getIdsFromText(update.body);
-			for (const linkedId of linkedIds) {
-				if (await isIdRelevant(linkedId)) {
-					update.linked = await createLinked(linkedId);
-					console.log(`Отпрака уведомления "${update.title}"`);
-					await sendNotification(update);
-					break;
-				}
-			}
-		} else if (await isIdRelevant(update.linked.id)) {
-			console.log(`Отпрака уведомления "${update.title}"`);
-			await sendNotification(update);
-		} else {
-			console.log(`Не релевантно "${update.title}"`);
-		}
-	}
+        /**
+         * Если новость не прикреплена к какому-либо аниме
+         * Нужно выполнить поиск ссылок на аниме тексте и привязать новость к релевантным
+         * Ссылки содержат ИД.
+         */
+        if (!update.linked?.id) {
+            const linkedIds = getIdsFromText(update.body);
+            for (const linkedId of linkedIds) {
+                if (await isIdRelevant(linkedId)) {
+                    update.linked = await createLinked(linkedId);
+                    console.log(`Отпрака уведомления "${update.title}", ${update.linked.russian || update.linked.name}`);
+                    await sendNotification(update);
+                    break;
+                }
+            }
+            console.log(`Не релевантно "${update.title}"`);
+        } else if (await isIdRelevant(update.linked.id)) {
+            console.log(`Отпрака уведомления "${update.title}", ${update.linked.russian || update.linked.name}`);
+            await sendNotification(update);
+        } else {
+            console.log(`Не релевантно "${update.title}"`);
+        }
+    }
 }
 
+(async () => {
+    try {
 
-const currentCheckTime = Date.now();
-loadTopics(LAST_CHECK_TIME, 'updates')
-	.then(processUpdates)
-	.then(() => loadTopics(LAST_CHECK_TIME, 'news'))
-	.then(processUpdates)
-	.then(() => writeFile(LAST_CHECK_TIME_PATH, `${currentCheckTime}`, {encoding: 'utf-8'}))
-	.catch(e => {
-		console.error(e);
-		console.error(e.stack);
-	});
+        const updates = [
+            ...await loadTopics(LAST_CHECK_TIME, 'updates').then(arr => {
+                console.log('Загружено обновлений: ', arr.length)
+                return arr
+            }),
+            ...await loadTopics(LAST_CHECK_TIME, 'news').then(arr => {
+                console.log('Загружено новостей: ', arr.length)
+                return arr
+            }),
+        ]
+
+        if (updates.length === 0) {
+            return
+        }
+
+        await processUpdates(updates)
+
+        const maxTopicTime = Math.max(...updates.map(t => t.created_at))
+
+        await writeFile(LAST_CHECK_TIME_PATH, `${maxTopicTime}`, {encoding: 'utf-8'})
+    } catch (e) {
+        console.error(e);
+        console.error(e.stack);
+    }
+})()
 

@@ -19,6 +19,7 @@ import {call} from './call.js';
  * @property {string} created_at
  * @property {'episode'|'released'|'ongoing'|'anons'|null} event
  * @property {number|null} episode
+ * @property {number} created_at
  */
 
 /**
@@ -67,13 +68,14 @@ const ALLOWED_UPDATE_EVENTS = process.env.ALLOWED_UPDATE_EVENTS
  * @property {TopicLinked|null} linked
  * @property {string} url
  * @property {'episode'|'released'|'ongoing'|'anons'|null} event
+ * @property {number} created_at
  */
 
 /**
  *
  * @param {number} before_at
  * @param {'news'|'updates'} type
- * @return {Promise<UpdateTopic[]>}
+ * @return {Promise<ResolvedTopic[]>}
  */
 export async function loadTopics(before_at, type) {
 	let page = 1;
@@ -93,7 +95,7 @@ export async function loadTopics(before_at, type) {
 		for (let i = 0; i < limit; i++) {
 			const topic = topics[i];
 			const topicTime = new Date(topic.created_at).getTime();
-			if (topicTime < before_at) {
+			if (topicTime <= before_at) {
 				return newTopicsFromLastCheck;
 			}
 
@@ -149,6 +151,7 @@ function resolveUpdateTopic(update) {
 		linked: update.linked,
 		event: update.event,
 		body,
+		created_at: (new Date(update.created_at)).getTime()
 	};
 }
 
@@ -160,6 +163,7 @@ function resolveUpdateTopic(update) {
  * @property {string} html_body
  * @property {TopicLinked|null} linked
  * @property {{url: string}} forum
+ * @property {number} created_at
  */
 
 /**
@@ -174,5 +178,6 @@ function resolveNewsTopic(topic) {
 		linked: topic.linked,
 		url: `https://shikimori.one${topic.forum.url}/${topic.id}/`,
 		event: null,
+		created_at: (new Date(topic.created_at)).getTime()
 	};
 }
