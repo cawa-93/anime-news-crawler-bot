@@ -110,6 +110,7 @@ function createLinked(id) {
 async function processUpdates(updates) {
     for (const update of updates) {
 
+
         /**
          * Если новость не прикреплена к какому-либо аниме
          * Нужно выполнить поиск ссылок на аниме тексте и привязать новость к релевантным
@@ -120,17 +121,22 @@ async function processUpdates(updates) {
             for (const linkedId of linkedIds) {
                 if (await isIdRelevant(linkedId)) {
                     update.linked = await createLinked(linkedId);
-                    console.log(`Отпрака уведомления "${update.title}", ${update.linked.russian || update.linked.name}`);
+                    const titleForLog = `${update.title} -- ${update.linked.russian || update.linked.name}`
+                    console.log(`Отпрака уведомления:`, titleForLog);
                     await sendNotification(update);
                     break;
                 }
             }
-            console.log(`Не релевантно "${update.title}"`);
+
+            const titleForLog = `${update.title} -- ${update.linked.russian || update.linked.name}`
+            console.log(`Не релевантно:`, titleForLog);
         } else if (await isIdRelevant(update.linked.id)) {
-            console.log(`Отпрака уведомления "${update.title}", ${update.linked.russian || update.linked.name}`);
+            const titleForLog = `${update.title} -- ${update.linked.russian || update.linked.name}`
+            console.log(`Отпрака уведомления:`, titleForLog);
             await sendNotification(update);
         } else {
-            console.log(`Не релевантно "${update.title}"`);
+            const titleForLog = `${update.title} -- ${update.linked.russian || update.linked.name}`
+            console.log(`Не релевантно:`, titleForLog);
         }
     }
 }
