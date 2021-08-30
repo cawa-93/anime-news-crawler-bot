@@ -55,9 +55,12 @@ function getNews(page, limit) {
     return call(`topics?${search}`);
 }
 
-
+/**
+ *
+ * @type {Array<'released' | 'ongoing' | 'episode' | 'anons'>}
+ */
 const ALLOWED_UPDATE_EVENTS = process.env.ALLOWED_UPDATE_EVENTS
-    ? process.env.ALLOWED_UPDATE_EVENTS.split(',').map(s => s.trim)
+    ? process.env.ALLOWED_UPDATE_EVENTS.split(',').map(s => s.trim())
     : ['released', 'ongoing'];
 
 
