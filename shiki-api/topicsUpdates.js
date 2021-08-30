@@ -1,4 +1,5 @@
 import {call} from './call.js';
+import {login} from "telegraf/typings/button";
 
 /**
  * @typedef TopicLinked
@@ -32,7 +33,11 @@ import {call} from './call.js';
  */
 function getUpdates(page, limit) {
 	const search = new URLSearchParams({page, limit});
-	return call(`topics/updates?${search}`);
+	return call(`topics/updates?${search}`).then(r => {
+		console.log({updates: r})
+
+		return r
+	});
 }
 
 
@@ -87,7 +92,6 @@ export async function loadTopics(before_at, type) {
 	const resolver = type === 'updates' ? resolveUpdateTopic : resolveNewsTopic;
 
 	while (true) {
-		const topics = await loader(page++, limit);
 		if (topics.length === 0) {
 			break;
 		}

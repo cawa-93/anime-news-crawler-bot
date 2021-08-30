@@ -41,6 +41,7 @@ export function call(input) {
 	const cachedResponse = runtimeCache.get(input)
 
 	if (cachedResponse) {
+		console.log('From cache', {input, cachedResponse})
 		return Promise.resolve(cachedResponse)
 	}
 
