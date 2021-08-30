@@ -94,6 +94,8 @@ export async function loadTopics(before_at, type) {
             break;
         }
 
+        console.log({ALLOWED_UPDATE_EVENTS})
+
         for (let i = 0; i < limit; i++) {
             const topic = topics[i];
             const topicTime = new Date(topic.created_at).getTime();
@@ -104,6 +106,7 @@ export async function loadTopics(before_at, type) {
                 return newTopicsFromLastCheck;
             }
 
+            console.log(type, {event: topic.event, isAllowed: ALLOWED_UPDATE_EVENTS.includes(topic.event)})
             if (type === 'updates' && !ALLOWED_UPDATE_EVENTS.includes(topic.event)) {
                 continue;
             }
