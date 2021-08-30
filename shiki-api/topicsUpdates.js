@@ -31,12 +31,12 @@ import {call} from './call.js';
  *   пагинации
  */
 function getUpdates(page, limit) {
-	const search = new URLSearchParams({page, limit});
-	return call(`topics/updates?${search}`).then(r => {
-		console.log({updates: r})
+    const search = new URLSearchParams({page, limit});
+    return call(`topics/updates?${search}`).then(r => {
+        console.log({updates: r})
 
-		return r
-	});
+        return r
+    });
 }
 
 
@@ -49,20 +49,20 @@ function getUpdates(page, limit) {
  *   пагинации
  */
 function getNews(page, limit) {
-	const search = new URLSearchParams({
-		page,
-		limit,
-		type: 'Topics::NewsTopic',
-		forum: 'news',
-		linked_type: 'Anime',
-	});
-	return call(`topics?${search}`);
+    const search = new URLSearchParams({
+        page,
+        limit,
+        type: 'Topics::NewsTopic',
+        forum: 'news',
+        linked_type: 'Anime',
+    });
+    return call(`topics?${search}`);
 }
 
 
 const ALLOWED_UPDATE_EVENTS = process.env.ALLOWED_UPDATE_EVENTS
-                              ? process.env.ALLOWED_UPDATE_EVENTS.split(',').map(s => s.trim)
-                              : ['released', 'ongoing'];
+    ? process.env.ALLOWED_UPDATE_EVENTS.split(',').map(s => s.trim)
+    : ['released', 'ongoing'];
 
 
 /**
@@ -82,43 +82,45 @@ const ALLOWED_UPDATE_EVENTS = process.env.ALLOWED_UPDATE_EVENTS
  * @return {Promise<ResolvedTopic[]>}
  */
 export async function loadTopics(before_at, type) {
-	let page = 1;
-	const limit = 30;
+    let page = 1;
+    const limit = 30;
 
-	const newTopicsFromLastCheck = [];
+    const newTopicsFromLastCheck = [];
 
-	const loader = type === 'updates' ? getUpdates : getNews;
-	const resolver = type === 'updates' ? resolveUpdateTopic : resolveNewsTopic;
+    const loader = type === 'updates' ? getUpdates : getNews;
+    const resolver = type === 'updates' ? resolveUpdateTopic : resolveNewsTopic;
 
-	while (true) {
-		if (topics.length === 0) {
-			break;
-		}
 
-		for (let i = 0; i < limit; i++) {
-			const topic = topics[i];
-			const topicTime = new Date(topic.created_at).getTime();
-			if (topicTime <= before_at) {
-				return newTopicsFromLastCheck;
-			}
+    while (true) {
+        const topics = await loader(page++, limit);
+        if (topics.length === 0) {
+            break;
+        }
 
-			if (type === 'updates' && !ALLOWED_UPDATE_EVENTS.includes(topic.event)) {
-				continue;
-			}
+        for (let i = 0; i < limit; i++) {
+            const topic = topics[i];
+            const topicTime = new Date(topic.created_at).getTime();
+            if (topicTime <= before_at) {
+                return newTopicsFromLastCheck;
+            }
 
-			newTopicsFromLastCheck.push(resolver(topic));
-		}
+            if (type === 'updates' && !ALLOWED_UPDATE_EVENTS.includes(topic.event)) {
+                continue;
+            }
 
-		/**
-		 * Если количество загруженных топиков меньше или равно лимиту значит
-		 * это все доступные результаты и следующей страницы пагинации не существует
-		 */
-		if (topics.length <= limit) {
-			break;
-		}
-	}
+            newTopicsFromLastCheck.push(resolver(topic));
+        }
 
-	return newTopicsFromLastCheck;
+        /**
+         * Если количество загруженных топиков меньше или равно лимиту значит
+         * это все доступные результаты и следующей страницы пагинации не существует
+         */
+        if (topics.length <= limit) {
+            break;
+        }
+    }
+
+    return newTopicsFromLastCheck;
 }
 
 
@@ -130,32 +132,32 @@ const dateFormat = new Intl.DateTimeFormat('uk', {month: 'long', day: 'numeric',
  * @returns {ResolvedTopic}
  */
 function resolveUpdateTopic(update) {
-	const title = update.event === 'anons'
-	              ? 'Анонсировано аниме'
-	              : update.event === 'ongoing'
-	                ? 'Начало показа'
-	                : update.event === 'released'
-	                  ? 'Показ завершен'
-	                  : update.event === 'episode'
-	                    ? `Вышла серия ${update.episode}`
-	                    : update.event + ' event';
+    const title = update.event === 'anons'
+        ? 'Анонсировано аниме'
+        : update.event === 'ongoing'
+            ? 'Начало показа'
+            : update.event === 'released'
+                ? 'Показ завершен'
+                : update.event === 'episode'
+                    ? `Вышла серия ${update.episode}`
+                    : update.event + ' event';
 
-	let body = ''
-	if (update.event === 'ongoing' && update.linked?.episodes) {
-		const episodesToEnd = update.linked.episodes - update.linked.episodes_aired;
-		const week = 1000 * 60 * 60 * 24 * 7
-		const proposedReleaseDate = Date.now() + episodesToEnd * week
-		body = `Предположительная дата завершения: <b>${dateFormat.format(proposedReleaseDate)}</b>`
-	}
+    let body = ''
+    if (update.event === 'ongoing' && update.linked?.episodes) {
+        const episodesToEnd = update.linked.episodes - update.linked.episodes_aired;
+        const week = 1000 * 60 * 60 * 24 * 7
+        const proposedReleaseDate = Date.now() + episodesToEnd * week
+        body = `Предположительная дата завершения: <b>${dateFormat.format(proposedReleaseDate)}</b>`
+    }
 
-	return {
-		title,
-		url: update.url,
-		linked: update.linked,
-		event: update.event,
-		body,
-		created_at: (new Date(update.created_at)).getTime()
-	};
+    return {
+        title,
+        url: update.url,
+        linked: update.linked,
+        event: update.event,
+        body,
+        created_at: (new Date(update.created_at)).getTime()
+    };
 }
 
 
@@ -175,12 +177,12 @@ function resolveUpdateTopic(update) {
  * @returns {ResolvedTopic}
  */
 function resolveNewsTopic(topic) {
-	return {
-		title: topic.topic_title,
-		body: topic.html_body,
-		linked: topic.linked,
-		url: `https://shikimori.one${topic.forum.url}/${topic.id}/`,
-		event: null,
-		created_at: (new Date(topic.created_at)).getTime()
-	};
+    return {
+        title: topic.topic_title,
+        body: topic.html_body,
+        linked: topic.linked,
+        url: `https://shikimori.one${topic.forum.url}/${topic.id}/`,
+        event: null,
+        created_at: (new Date(topic.created_at)).getTime()
+    };
 }
