@@ -1,5 +1,4 @@
 import {call} from './call.js';
-import {login} from "telegraf/typings/button";
 
 /**
  * @typedef TopicLinked
