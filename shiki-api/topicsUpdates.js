@@ -92,24 +92,18 @@ export async function loadTopics(before_at, type) {
 
     while (true) {
         const topics = await loader(page++, limit);
-        console.log(`topics.length`, topics.length)
         if (topics.length === 0) {
             break;
         }
-
-        console.log({ALLOWED_UPDATE_EVENTS})
 
         for (let i = 0; i < limit; i++) {
             const topic = topics[i];
             const topicTime = new Date(topic.created_at).getTime();
 
-            console.log({topicTime, before_at}, topicTime <= before_at)
             if (topicTime <= before_at) {
-                console.log('EXIT', newTopicsFromLastCheck.length)
                 return newTopicsFromLastCheck;
             }
 
-            console.log(type, {event: topic.event, isAllowed: ALLOWED_UPDATE_EVENTS.includes(topic.event)})
             if (type === 'updates' && !ALLOWED_UPDATE_EVENTS.includes(topic.event)) {
                 continue;
             }
