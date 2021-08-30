@@ -25,7 +25,7 @@ jobs:
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         TARGET_CHAT_ID: ${{ secrets.TARGET_CHAT_ID }}
         IGNORED_FRANCHISES: ${{ secrets.IGNORED_FRANCHISES }}
-        ALLOWED_UPDATE_EVENTS: ${{ secrets.ALLOWED_UPDATE_EVENTS }}
+        ALLOWED_UPDATE_EVENTS: "released,anons,ongoing"
 
     - run: |
         git config user.name github-actions
