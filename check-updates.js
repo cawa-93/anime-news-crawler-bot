@@ -121,21 +121,21 @@ async function processUpdates(updates) {
             for (const linkedId of linkedIds) {
                 if (await isIdRelevant(linkedId)) {
                     update.linked = await createLinked(linkedId);
-                    const titleForLog = `${update.title} -- ${update.linked.russian || update.linked.name}`
+                    const titleForLog = `${update.title} -- ${update?.linked?.russian || update?.linked?.name}`
                     console.log(`Отпрака уведомления:`, titleForLog);
                     await sendNotification(update);
                     break;
                 }
             }
 
-            const titleForLog = `${update.title} -- ${update.linked.russian || update.linked.name}`
+            const titleForLog = `${update.title} -- ${update?.linked?.russian || update?.linked?.name}`
             console.log(`Не релевантно:`, titleForLog);
         } else if (await isIdRelevant(update.linked.id)) {
-            const titleForLog = `${update.title} -- ${update.linked.russian || update.linked.name}`
+            const titleForLog = `${update.title} -- ${update?.linked?.russian || update?.linked?.name}`
             console.log(`Отпрака уведомления:`, titleForLog);
             await sendNotification(update);
         } else {
-            const titleForLog = `${update.title} -- ${update.linked.russian || update.linked.name}`
+            const titleForLog = `${update.title} -- ${update?.linked?.russian || update?.linked?.name}`
             console.log(`Не релевантно:`, titleForLog);
         }
     }
