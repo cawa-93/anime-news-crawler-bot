@@ -24,7 +24,7 @@ jobs:
         APP_OWNER: ${{ secrets.APP_OWNER }}
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
         TARGET_CHAT_ID: ${{ secrets.TARGET_CHAT_ID }}
-        IGNORED_FRANCHISES: ${{ secrets.IGNORED_FRANCHISES }}
+        IGNORED_FRANCHISES: fate,sword_art_online
         ALLOWED_UPDATE_EVENTS: "released,anons,ongoing"
 
     - run: |
